@@ -1,22 +1,24 @@
-"""Smart Mirror Application"""
+"""Smart Mirror Application."""
 
-import pprint
-import FreeSimpleGUI as Sg
-import pytz  # type: ignore[import]
-from datetime import datetime, date
 import random
-from collections import deque
 import time
-import settings
+from collections import deque
+from datetime import date, datetime
 from pathlib import Path
-from weather import get_weather_data as fetch_weather_data
-from quotes import quotes, racist_jokes, sexist_jokes, dad_jokes, my_quotes, dark_humor
+
+import FreeSimpleGUI as Sg  # type: ignore[import]
+import pytz  # type: ignore[import]
+
+import settings
 from layout import create_weather_layout
+from quotes import quotes
 from records import records
+from weather import get_weather_data as fetch_weather_data
+
 
 def make_pretty(daily_dict: dict, hourly_dict: dict , current_weather: dict) -> tuple:
     """Make the weather data more human readable.
-    
+
     :param daily_dict: Daily weather data
     :param hourly_dict: Hourly weather data
     :param current_weather: Current weather data
@@ -30,10 +32,10 @@ def make_pretty(daily_dict: dict, hourly_dict: dict , current_weather: dict) -> 
         sunrise_str = datetime.fromtimestamp(day["sunrise"], eastern).strftime("%-I:%M %p")
         sunset_str  = datetime.fromtimestamp(day["sunset"],  eastern).strftime("%-I:%M %p")
 
-        day['sunrise'] = sunrise_str
-        day['sunset'] = sunset_str
+        day["sunrise"] = sunrise_str
+        day["sunset"] = sunset_str
         day["date"] = day["date"].strftime("%A, %B %d")
-        daily_dict[0]['uv_index_max'] = f"{int(daily_dict[0]['uv_index_max'])}"
+        daily_dict[0]["uv_index_max"] = f"{int(daily_dict[0]['uv_index_max'])}"
 
     for hour in hourly_dict:
         hour["temperature_2m"] = f"{int(hour['temperature_2m'])} °F"
@@ -48,9 +50,9 @@ def make_pretty(daily_dict: dict, hourly_dict: dict , current_weather: dict) -> 
 
     directions = [
         "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
+        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
     ]
-    wind_direction_index = int((current_weather['wind_direction_10m'] + 11.25) / 22.5) % 16
+    wind_direction_index = int((current_weather["wind_direction_10m"] + 11.25) / 22.5) % 16
 
     current_weather["temperature_2m"] = f"{int(current_weather['temperature_2m'])} °F"
     current_weather["relative_humidity_2m"] = f"{current_weather['relative_humidity_2m']}%"
@@ -75,7 +77,7 @@ def make_pretty(daily_dict: dict, hourly_dict: dict , current_weather: dict) -> 
 # Start with equal weights
 history = deque(maxlen=10)  # remember last 10 picks
 
-def pick_index(array_to_pick_from=quotes) -> int:
+def pick_index(array_to_pick_from: int=quotes) -> int:
     """Pick an index from the array_to_pick_from, avoiding recent picks.
 
     :param array_to_pick_from: List of items to pick from
@@ -98,7 +100,7 @@ def update_weather(window: Sg.Window) -> None:
     daily_dict, hourly_dict, current_weather = make_pretty(daily_dict, hourly_dict, current_weather)
 
     # Choose which to display rain or snow
-    if float(current_weather['rain'].replace("in", "")) >= float(current_weather['snowfall'].replace("in", "")):
+    if float(current_weather["rain"].replace("in", "")) >= float(current_weather["snowfall"].replace("in", "")):
         window["current_precipitation"].update(f"Current Precipitation: {hourly_dict[0]['precipitation']}\t")
         window["precipitation_chance"].update(f"Precipitation Chance: {hourly_dict[0]['precipitation_probability']}")
     else:
@@ -118,17 +120,17 @@ def update_weather(window: Sg.Window) -> None:
     window["humidity"].update(f"Humidity: {current_weather['relative_humidity_2m']}\t")
     window["uv_index"].update(f"UV Index: {daily_dict[0]['uv_index_max']}")
 
-    # for key, value in daily_dict[0].items():
-    #     print(f"{key}: {value}")
-    # print("\n\n")
+    for key, value in daily_dict[0].items():
+        print(f"{key}: {value}")
+    print("\n\n")
 
-    # for key, value in hourly_dict[0].items():
-    #     print(f"{key}: {value}")
-    # print("\n\n")
+    for key, value in hourly_dict[0].items():
+        print(f"{key}: {value}")
+    print("\n\n")
 
-    # for key, value in current_weather.items():
-    #     print(f"{key}: {value}")
-    # print("\n\n")
+    for key, value in current_weather.items():
+        print(f"{key}: {value}")
+    print("\n\n")
 
 
 def add_new_person(current_quote: str, window: Sg.Window) -> None:
@@ -219,11 +221,10 @@ def add_new_person(current_quote: str, window: Sg.Window) -> None:
                 if event == "0":
                     window["welcome_message"].update("")
                     window["quote_of_day"].update(current_quote)
-                    with open("records.py", "w") as f:
+                    with Path.open("records.py", "w") as f:
                         f.write("records = ")
-                        pprint.pprint(records, stream=f, width=80, sort_dicts=True)
                     return
-    
+
                 mapping = {
                     "1": "racist_jokes",
                     "2": "sexist_jokes",
@@ -242,40 +243,38 @@ def add_new_person(current_quote: str, window: Sg.Window) -> None:
                 records[name].append("dad_jokes")
                 window["welcome_message"].update("")
                 window["quote_of_day"].update(current_quote)
-                with open("records.py", "w") as f:
+                with Path.open("records.py", "w") as f:
                     f.write("records = ")
-                    pprint.pprint(records, stream=f, width=80, sort_dicts=True)
                 return
 
 
-def main():
-    """Main function to run the Smart Mirror application."""
+def main() -> None:
+    """Run the Smart Mirror application."""
     window = Sg.Window("Scoreboard", create_weather_layout(), no_titlebar=False,
                         resizable=True, return_keyboard_events=True).Finalize()
-    
+
     window.set_cursor("none")  # Hide the mouse cursor
     window.Maximize()
     last_date = None
     last_update = 0
     current_quote = ""
     update_weather(window)
-    
+
     while True:
         event, _ = window.read(timeout=100)
         if event == Sg.WIN_CLOSED or "Escape" in event:
             break
-        
+
         # Update weather at regular intervals
         if time.time() - last_update >= settings.UPDATE_INTERVAL:
             update_weather(window)
             last_update = time.time()
 
         # If it's a new day, pick a new random quote
-        today = date.today()
+        today = datetime.now(pytz.timezone(settings.TIMEZONE)).date()
         if last_date != today:
             i = pick_index()
             window["quote_of_day"].update(quotes[i])
-            print(f"Picked '{quotes[i]}'")
             current_quote = quotes[i]
             last_date = today
 

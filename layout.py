@@ -1,6 +1,8 @@
 """Layout module for Smart Mirror application."""
-import FreeSimpleGUI as Sg
+import FreeSimpleGUI as Sg  # type: ignore[import]
+
 import settings
+
 
 def create_weather_layout() -> list:
     """Create General User Interface.
@@ -10,7 +12,7 @@ def create_weather_layout() -> list:
     Sg.theme("black")
 
     weather_week = [
-        [Sg.Text("", pad=((0, 0), (0, 20)), font=(settings.FONT, settings.DATE_TXT_SIZE), key="date"),],
+        [Sg.Text("", pad=((0, 0), (0, 20)), font=(settings.FONT, settings.DATE_TXT_SIZE), key="date")],
 
         [Sg.Text("", pad=((0, 0), (0, 0)), key="sunrise"),
          Sg.Text("", pad=((0, 0), (0, 0)), key="sunset")],
@@ -38,11 +40,11 @@ def create_weather_layout() -> list:
                                    font=(settings.FONT, settings.QUOTE_TXT_SIZE),
                                    background_color=settings.BACKGROUND_COLOR,
                                    border_width=0,
-                             justification="center", key="quote_of_day")
+                             justification="center", key="quote_of_day"),
                     ],
                     [Sg.VPush()],
                     ]
-    
+
     welcome_message = [[Sg.VPush()],
                           [Sg.Push(),
                            Sg.Text("", font=(settings.FONT, settings.GREETING_TXT_SIZE),
@@ -51,7 +53,7 @@ def create_weather_layout() -> list:
                            [Sg.ProgressBar(100, key="progress_bar", size=(settings.WINDOW_WIDTH, 20),
                         bar_color=("green", "white"), visible=False)],
                           [Sg.VPush()],
-                          [Sg.Push()]
+                          [Sg.Push()],
                           ]
 
     return [

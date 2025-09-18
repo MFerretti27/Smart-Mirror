@@ -1,4 +1,4 @@
-
+"""Quotes to Display daily and for user when recognized."""
 my_quotes = [
     "You are in the Maze, there is no escape, welcome to madness",
     "When the bullet hits your skull what will it matter why",
@@ -32,7 +32,7 @@ racist_jokes = [
     "why do all black people have nightmares only? Because the only one who had a dream got shot",
     "What's the difference between a Jew and a canoe? Canoes tip.",
     "why can't stevie wonder read? because he is black",
-    "What's the difference between Jews and boyscouts? Boyscouts come back from camp."
+    "What's the difference between Jews and boyscouts? Boyscouts come back from camp.",
 ]
 
 quotes = [
