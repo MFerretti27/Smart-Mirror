@@ -3,6 +3,7 @@
 import random
 import time
 from collections import deque
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -16,7 +17,8 @@ from records import records
 from weather import get_weather_data as fetch_weather_data
 
 
-def make_pretty(daily_dict: dict, hourly_dict: dict , current_weather: dict) -> tuple:
+def make_pretty(daily_dict: list[dict[str, object]], hourly_dict: list[dict[str, object]],
+    current_weather: dict[str, object]) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, object]]:
     """Make the weather data more human readable.
 
     :param daily_dict: Daily weather data
@@ -75,9 +77,9 @@ def make_pretty(daily_dict: dict, hourly_dict: dict , current_weather: dict) -> 
 
 
 # Start with equal weights
-history = deque(maxlen=10)  # remember last 10 picks
+history: deque[int] = deque(maxlen=10)  # remember last 10 picks
 
-def pick_index(array_to_pick_from: int=quotes) -> int:
+def pick_index(array_to_pick_from: Sequence[str] = quotes) -> int:
     """Pick an index from the array_to_pick_from, avoiding recent picks.
 
     :param array_to_pick_from: List of items to pick from
@@ -221,7 +223,7 @@ def add_new_person(current_quote: str, window: Sg.Window) -> None:
                 if event == "0":
                     window["welcome_message"].update("")
                     window["quote_of_day"].update(current_quote)
-                    with Path.open("records.py", "w") as f:
+                    with Path("records.py").open("w", encoding="utf-8") as f:
                         f.write("records = ")
                     return
 
