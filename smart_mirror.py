@@ -114,7 +114,7 @@ def update_weather(window: Sg.Window) -> None:
     window["sunrise"].update(f"Sunrise: {daily_dict[0]['sunrise']}\t")
     window["sunset"].update(f"Sunset: {daily_dict[0]['sunset']}")
 
-    window["cloud_cover"].update(f"Cloud Cover: {current_weather["cloud_cover"]}\t")
+    window["cloud_cover"].update(f"Cloud Cover: {current_weather['cloud_cover']}\t")
     window["wind"].update(f"Wind: {current_weather['wind_speed_10m']} {current_weather['wind_direction_10m']}")
 
     window["humidity"].update(f"Humidity: {current_weather['relative_humidity_2m']}\t")
