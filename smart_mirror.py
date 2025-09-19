@@ -3,7 +3,7 @@
 import random
 import time
 from collections import deque
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 
 import FreeSimpleGUI as Sg  # type: ignore[import]
