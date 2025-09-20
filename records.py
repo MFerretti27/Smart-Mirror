@@ -1,3 +1,3 @@
 """Record of users registered and their preferences."""
-records = {
+records: dict[str, list[str]]= {
 }

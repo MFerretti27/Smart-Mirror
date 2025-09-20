@@ -2,6 +2,7 @@
 import FreeSimpleGUI as Sg  # type: ignore[import]
 
 import settings
+from weather import get_weather_data
 
 
 def create_weather_layout() -> list:
@@ -66,3 +67,48 @@ def create_weather_layout() -> list:
         [Sg.Frame("", quote_of_day, element_justification="center", border_width=0,
                   size=(settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT * (1 / 8)))],
     ]
+
+
+
+################################################
+# ---------- Update weather and GUI ---------- #
+################################################
+def update_weather(window: Sg.Window) -> None:
+    """Fetch and update the weather data in the GUI window.
+
+    :param window: The GUI window to update
+    """
+    daily_dict, hourly_dict, current_weather = get_weather_data()
+
+    # Choose which to display rain or snow
+    if hourly_dict:
+        if current_weather.get("rain", "0") >= current_weather.get("snowfall", "0"):
+            window["current_precipitation"].update(f"Current Precipitation: {hourly_dict[0].get('precipitation','')}\t")
+            window["precipitation_chance"].update("Precipitation Chance:"
+                                                  f"{hourly_dict[0].get('precipitation_probability','')}")
+        else:
+            window["current_precipitation"].update(f"Next Hour Snowfall: {hourly_dict[0].get('snowfall','')}\t")
+            window["precipitation_chance"].update(f"Current Snow Depth: {hourly_dict[0].get('snow_depth','')}")
+    else:
+        window["current_precipitation"].update("No hourly data")
+        window["precipitation_chance"].update("")
+
+    window["date"].update(f"{daily_dict[0].get('date','')}" if daily_dict else "")
+    window["current_temp"].update(f"Current Temperature: {current_weather.get('temperature_2m','')}\t")
+    window["current_apparent_temp"].update("Current Apparent Temperature:"
+                                           f"{current_weather.get('apparent_temperature','')}\t")
+
+    if daily_dict:
+        window["sunrise"].update(f"Sunrise: {daily_dict[0].get('sunrise','')}\t")
+        window["sunset"].update(f"Sunset: {daily_dict[0].get('sunset','')}")
+        window["uv_index"].update(f"UV Index: {daily_dict[0].get('uv_index_max','')}")
+    else:
+        window["sunrise"].update("")
+        window["sunset"].update("")
+        window["uv_index"].update("")
+
+    window["cloud_cover"].update(f"Cloud Cover: {current_weather.get('cloud_cover','')}\t")
+    window["wind"].update(f"Wind: {current_weather.get('wind_speed_10m','')}"
+                          f"{current_weather.get('wind_direction_10m','')}")
+
+    window["humidity"].update(f"Humidity: {current_weather.get('relative_humidity_2m','')}\t")
