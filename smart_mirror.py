@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -300,7 +300,7 @@ def main() -> None:
     window.set_cursor("none")  # Hide the mouse cursor
     window.Maximize()
 
-    last_date: datetime.date | None = None
+    last_date: date | None = None
     last_update = 0.0
     current_quote = ""
 
