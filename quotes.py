@@ -17,10 +17,13 @@ sexist_jokes = [
 racist_jokes = [
     "How do you know the first man Adam was not black? I've never heard of a black man giving up any of his ribs",
     "How does every racist joke start? \t With a look over your shoulder.",
-    "Did you hear that the police are looking for a racist assaulter? My friend called but apparently, it wasn't a job notice.",
+    ("Did you hear that the police are looking for a racist assaulter? My friend called but apparently,"
+     "it wasn't a job notice."),
     "What do you call a blind racist? \t A Not-see.",
-    "Did you hear about a blackout in the neighborhood last night? The police told the people to stay in their houses until they'd shot him.",
-    "Did you hear about the man who was called racist for saying “black paint”? Apparently, the politically correct term is “Tyrone, please paint the fence.”",
+    ("Did you hear about a blackout in the neighborhood last night? The police told the people to stay in their houses"
+    "until they'd shot him."),
+    ("Did you hear about the man who was called racist for saying “black paint”? Apparently, the politically correct"
+     "term is “Tyrone, please paint the fence.”"),
     "What does a dyslexic racist hate? \t gingers.",
     "What's the worst part about being a black Jew? They make you stand in the back of the oven.",
     "How many police officers does it take to change a light bulb? None, they just beat the room for being black.",
@@ -111,7 +114,8 @@ dad_jokes = [
 
 
 dark_humor = [
-    "A man goes to the library and asks for a book on suicide. The librarian says, 'Fuck off, you won't bring it back.'",
+    ("A man goes to the library and asks for a book on suicide. The librarian says,"
+    "'Fuck off, you won't bring it back.'"),
     "If we had mosquito nets in Africa we could save millions of mosquitos from getting AIDS.",
     "What do guitarists and priests have in common? They're both really good at fingering A Minor",
     "If I ever saw an amputee being hanged, I'd start yelling out letters.",
