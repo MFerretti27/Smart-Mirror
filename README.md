@@ -1,5 +1,5 @@
 # General Information
-- A Smart Mirror is display current weather and a daily motivational quote.
+- A Smart Mirror that displays current weather and a daily motivational quote.
 - Integrated Facial Recognition to detect users that stand in front of the mirror to welcome them by name and tell them a joke.
 
 
@@ -17,8 +17,8 @@ Return/Enter - Add a new user to recognized.<br />
 - Step 2: Type the name of the persons face you want to recognize.<br />
 - Step 3: Press Enter when finished when done entering new persons name.<br />
 - Step 4: Press Enter again to start taking pictures
-  - (stand ~3 feet away a move head around to get different angles, will take ~20 seconds.)<br />
-- Step 5: Choose if the mirror should display nice jokes or mean jokes when it detects a recognized user in front of the mirror (by pressing 1 or 2).<br />
+  - (stand ~3 feet away and move head around to get different angles, will take ~20 seconds.)<br />
+- Step 5: Choose if the mirror should display nice jokes or mean jokes when it detects a recognized user stands in front (by pressing 1 or 2).<br />
   - If nice is chosen then it will display dad jokes
   - If mean is chosen it will ask specifically what type of mean jokes (racist jokes, sexist jokes, dad jokes, dark humor, my_quotes).<br />
 
@@ -41,7 +41,7 @@ Return/Enter - Add a new user to recognized.<br />
   - 16MP 140°(D) Wide Angle [Link](https://www.amazon.com/dp/B0C53BBMLG?ref=ppx_yo2ov_dt_b_fed_asin_title)
   - 12MP 75°(D) [Link](https://www.amazon.com/Arducam-Raspberry-Camera-Autofocus-15-22pin/dp/B0C9PYCV9S/ref=sr_1_4?crid=3LQSJWLQFI6VP&dib=eyJ2IjoiMSJ9.nVioKbJExmOr6PQeUJNNEmOIA-WDzlNCBgMD4-plbUcfcf2FGhOhPVFD9qMxVMO6n7_-IEqRd8vhMhduNrgMav76LjeNNkYRnNg7AnH4jLM1zs7LSUi2-WkSL4syK4YMYlmv51JL7HWtD-IgylAPlHFU31eluab25HpcAW0WH5__cHawzH6S0GICh11QZFUeWb2Gwz7khv7LYm4WiRbl-YgBoZwxbwrNsWwbEmyuh1TgdpcNXguBkPip81nkCygonurM4KSjm9gF8iAdbd4spfgwzZTsyL8TRdiR_YF7cpc.tnGXbQ1zzdEkOJFB47REryIjvvtCPmkmzhtBD8GmfH8&dib_tag=se&keywords=raspberry+pi+camera&qid=1758252696&s=electronics&sprefix=raspberry+pi+camera%2Celectronics%2C143&sr=1-4)
 - Frame
- - 12x24 Inch [Link](https://www.amazon.com/gp/product/B0BQ3GD1MS/ref=ox_sc_act_title_3?smid=A1ECBKN4LYQED2&psc=1)
+  - 12x24 Inch [Link](https://www.amazon.com/gp/product/B0BQ3GD1MS/ref=ox_sc_act_title_3?smid=A1ECBKN4LYQED2&psc=1)
 - 1 way mirror film
   - One Way Privacy Window Film (23.6 Inch × 6.5 Feet) [Link](https://www.amazon.com/gp/product/B0BD58FSTQ/ref=ox_sc_saved_title_4?smid=A1A5ZZPUKJRFVY&th=1)
   - Two Way Mirror Glass (12x24 Inch)[Link](https://www.amazon.com/gp/product/B0DWWL2TTT/ref=ox_sc_act_title_4?smid=A1QBRUMVXLEEBK&th=1)
