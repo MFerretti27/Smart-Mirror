@@ -110,6 +110,11 @@ dad_jokes = [
     "Why did the picture go to jail? Because it was framed.",
     "Don't challenge Death to a pillow fight. Unless you're prepared for the reaper cushions.",
     "I threw a boomerang a couple of years ago. I know live in constant fear.",
+    "Why couldn't the bank keep any secrets? It had too many tellers!",
+    "Why don't you ever see elephants hiding in trees? Because they're so good at it.",
+    "Today, my son asked 'Can I have a bookmark?' and I burst into tears. 11 years old and he still doesn't know my name is Brian.",
+    "Did you hear the one about the dog and the tree? They had a long conversation about bark.",
+    "“Don't screw around,” he said while holding a screwdriver.",
 ]
 
 

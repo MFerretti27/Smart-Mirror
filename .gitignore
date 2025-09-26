@@ -6,3 +6,15 @@ __pycache__/
 
 # Cached File for weather data
 *sqlite
+
+# VSCode settings
+.vscode/
+
+# pictures taken of users
+dataset/
+
+# trainer and encodings
+trainer.yml
+encode_dataset.py
+encodings.pickle
+encodings.pkl

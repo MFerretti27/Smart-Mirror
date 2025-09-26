@@ -1,90 +1,82 @@
-!/bin/bash
-# This script will set up a Raspberry Pi to run the smart mirror application.
-# It will install all necessary dependencies including OpenCV and face-recognition.
+#!/usr/bin/env bash
+
+# To change what weather data is displayed, visit: https://open-meteo.com/en/docs
+
+# To learn specific camera configuration, visit:
+# https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/16MP-IMX519/#step-4-modify-config-file
 
 
-# git clone https://github.com/carolinedunn/facial_recognition
+set -e
 
+echo "=== Smart Mirror Setup Script ==="
 
-# This will be a long stream of terminal commands forewarning.
-# This will also take a substantial amount of time.
+# Update system
+sudo apt update
+sudo apt upgrade -y
 
-# This is an in-depth procedure to follow to get your Raspberry Pi to install Open-CV.
-# Turn on a fresh version of Raspberry Pi running Raspberry Pi 'Buster' OS and connect it to the Internet.
+echo "=== Installing system dependencies ==="
+sudo apt install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    libatlas-base-dev \
+    libjasper-dev \
+    libqtgui4 \
+    libqt4-test \
+    libqt5gui5 \
+    libopenexr-dev \
+    libilmbase-dev \
+    libgtk-3-dev \
+    libhdf5-dev \
+    libhdf5-serial-dev \
+    libhdf5-103 \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libtbb2 \
+    libtbb-dev \
+    libdc1394-22-dev \
+    libv4l-dev \
+    v4l-utils \
+    cmake \
+    gfortran \
+    pkg-config \
+    rpicam-apps \
+    python3-opencv \
+    opencv-data
 
-# Open up the Terminal by pressing the Terminal Button found on the top left of the button.
-# Copy and paste each command into your Pi’s terminal, press Enter, and allow it to finish before moving onto the next command.
-# If ever prompted, “Do you want to continue? (y/n)” press Y and then the Enter key to continue the process.
+echo "=== Installing Python packages ==="
+pip3 install --upgrade pip wheel setuptools
 
+# Install needed Python libraries
+pip3 install \
+    FreeSimpleGUI \
+    numpy \
+    requests \
+    pytz \
+    opencv-contrib-python \
+    opencv-python \
+    pillow
 
-pip install picamera[array]
+echo "=== Verifying installation ==="
 
-sudo apt-get update
-sudo apt-get upgrade
+# Check rpicam
+if ! command -v rpicam-still &>/dev/null; then
+    echo "❌ rpicam-still not found. Please make sure you are on Raspberry Pi OS Bookworm or Bullseye with libcamera support."
+    exit 1
+else
+    echo "✅ rpicam-still installed"
+fi
 
-sudo apt install cmake build-essential pkg-config git
-sudo apt install libjpeg-dev libtiff-dev libjasper-dev libpng-dev libwebp-dev libopenexr-dev
-sudo apt install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libdc1394-22-dev libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
-sudo apt install libgtk-3-dev libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
-sudo apt install libatlas-base-dev liblapacke-dev gfortran
-sudo apt install libhdf5-dev libhdf5-103
-sudo apt install python3-dev python3-pip python3-numpy
+# Check OpenCV
+python3 - <<'EOF'
+import cv2, numpy
+print("✅ OpenCV version:", cv2.__version__)
+if not hasattr(cv2, "face"):
+    print("❌ cv2.face is missing. Make sure opencv-contrib-python installed correctly.")
+else:
+    print("✅ cv2.face module available")
+EOF
 
-# We must now expand the swapfile before running the next set of commands.
-# To do this type and enter into the Terminal the following line.
-sudo nano /etc/dphys-swapfile
-
-# The change the number on CONF_SWAPSIZE = 100 to CONF_SWAPSIZE=2048.
-# Having done this press Ctrl-X, Y, and then Enter Key to save these changes.
-# This change is only temporary and we will be changing it back.
-# To have these changes affect anything we must restart the swapfile by entering the following command to the terminal.
-# Then we will resume Terminal Commands as normal.
-
-sudo systemctl restart dphys-swapfile
-
-git clone https://github.com/opencv/opencv.git
-
-git clone https://github.com/opencv/opencv_contrib.git
-
-mkdir ~/opencv/build
-
-cd ~/opencv/build
-
-cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib/modules \
-    -D ENABLE_NEON=ON \
-    -D ENABLE_VFPV3=ON \
-    -D BUILD_TESTS=OFF \
-    -D INSTALL_PYTHON_EXAMPLES=OFF \
-    -D OPENCV_ENABLE_NONFREE=ON \
-    -D CMAKE_SHARED_LINKER_FLAGS=-latomic \
-    -D BUILD_EXAMPLES=OFF ..
-
-
-# This | make | Command will take over an hour to install and there will be no indication of how much longer it will take.
-# It may also freeze the monitor display. Be ultra patient and it will work.
-# Once complete you are most of the way done. Then we will resume terminal commands.
-make -j$(nproc)
-
-
-sudo make install
-sudo ldconfig
-
-# This | pip install face-recognition| Command will take over 40 mins to install and there will be no indication of how much longer it will take.
-# Be ultra patient and it will work. Once complete you are most of the way done.
-# Then we will resume terminal commands.
-pip install face-recognition --no-cache-dir
-pip install imutils
-
-# We must now return the swapfile before running the next set of commands.
-# To do this type into Terminal this line.
-sudo nano /etc/dphys-swapfile
-
-# The change the number on CONF_SWAPSIZE = 2048 to CONF_SWAPSIZE=100.
-# Having done this press Ctrl-X, Y, and then Enter Key to save these changes.
-# This returns the Swapfile to normal. To have these changes affect anything we must
-# restart the swapfile by entering the following command to the terminal.
-# Then we will resume terminal Commands as normal.
-
-sudo systemctl restart dphys-swapfile
+echo "=== Setup complete! ==="
+echo "Now run: python3 smart_mirror.py"

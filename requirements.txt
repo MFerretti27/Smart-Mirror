@@ -4,3 +4,5 @@ openmeteo_requests
 pandas
 requests_cache
 retry_requests
+opencv-python
+opencv-contrib-python

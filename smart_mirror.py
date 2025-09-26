@@ -1,42 +1,35 @@
-"""Smart Mirror Application."""
+"""Smart Mirror Application with Face Recognition using rpicam-still."""
 
-from __future__ import annotations
-
+import os
 import random
 import time
+import re
+import threading
 from collections import deque
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-import logging
-from datetime import date, datetime
-from pathlib import Path
+from datetime import datetime, date
 
 import FreeSimpleGUI as Sg  # type: ignore[import]
 import pytz  # type: ignore[import]
 
 import settings
+import logging
 from layout import create_weather_layout, update_weather
-from quotes import quotes
+from quotes import quotes, racist_jokes, sexist_jokes, dad_jokes, dark_humor, my_quotes
 from records import records
+from register import register_person
+from recognize import recognize_faces, train_model
 
 logger = logging.getLogger(__name__)
 
-
-
-######################################
-# ---------- Quote picker ---------- #
-######################################
-# remember last 10 picks (indices)
+# History for quote picking
 history: deque[int] = deque(maxlen=10)
-def pick_index(array_to_pick_from: Sequence[str] | None = None) -> int:
-    """Pick an index from array_to_pick_from avoiding recent picks."""
-    if array_to_pick_from is None:
-        array_to_pick_from = quotes  # use imported quotes
 
+
+def pick_index(array_to_pick_from=None):
+    """Pick an index from array avoiding recent picks."""
+    if array_to_pick_from is None:
+        array_to_pick_from = quotes
     length = max(1, len(array_to_pick_from))
-    # Base weights
     weights = [1.0] * length
     for h in history:
         if 0 <= h < length:
@@ -45,124 +38,24 @@ def pick_index(array_to_pick_from: Sequence[str] | None = None) -> int:
     history.append(index)
     return index
 
-########################################
-# ---------- Add new person ---------- #
-########################################
-def add_new_person(current_quote: str, window: Sg.Window) -> None:
-    """Use facial recognition to identify a person and update the welcome message.
-
-    :param current_quote: The current quote being displayed
-    :param window: The GUI window to update
-    """
-    collecting_name = False
-    taking_pictures = False
-    decide_what_to_display = False
+def choose_what_to_display(window: Sg.Window, name: str) -> None:
+    """Ask user what type of content to display via GUI."""
     first_question_asked = False
-    name = ""
 
     while True:
         event, _ = window.read(timeout=100)
-        if "Escape" in event:
-            window["welcome_message"].update("")
-            window["quote_of_day"].update(current_quote)
-            return
 
-        # Start entering name
-        if not collecting_name and not taking_pictures and not decide_what_to_display:
-            window["welcome_message"].update("Enter Name:")
-            window["quote_of_day"].update("")
-            name = ""
-            collecting_name = True
+        if not first_question_asked:
+            window["welcome_message"].update("Should I be Mean or nice?")
+            window["quote_of_day"].update("1: Mean    2: Nice")
+        if event == "1" and not first_question_asked:
+            window["welcome_message"].update("What jokes to tell?")
+            window["quote_of_day"].update("0: Exit   1: Racist   2: Sexist   3: Dad   4: Dark Humor")
+            first_question_asked = True
             continue
 
-        # Finish entering name
-        if "Return" in event and collecting_name:
-            if name == "":
-                window["quote_of_day"].update("Name cannot be blank, please enter something or Escape to quit")
-            elif name in records:
-                window["quote_of_day"].update(f"{name} is already taken, please use another")
-            else:
-                window["welcome_message"].update(f"Name Recorded:  {name}")
-                records[name] = []
-                window["quote_of_day"].update("")
-                window.read(timeout=100)
-                time.sleep(2)
-                # create directory for person if desired:
-                # with contextlib.suppress(OSError):
-                #     (Path.cwd() / "people" / name).mkdir(parents=True, exist_ok=True)
-                collecting_name = False
-                taking_pictures = True
-                window["welcome_message"].update("Press Enter to Start Taking Pictures")
-                window["quote_of_day"].update("Please stand ~3 feet away and move slowly to capture angles")
-            continue
-
-        # Collect letters while in name entry mode
-        if collecting_name:
-            if len(event) == 1 and event.isalpha():  # only single characters and letters
-                name += event
-                window["welcome_message"].update(f"Enter Name:  {name}")
-            if "BackSpace" in event or "Delete" in event or "Back" in event:
-                name = name[:-1]
-                window["welcome_message"].update(f"Enter Name:  {name}")
-            continue
-
-        # Start taking pictures
-        if "Return" in event and taking_pictures:
-            window["welcome_message"].update("Taking Pictures...")
-            window["quote_of_day"].update("")
-            window["progress_bar"].update(visible=True)
-
-            for i in range(100):
-                time.sleep(0.1)
-                # TODO(mattFerretti): Take pictures here and save into (Path.cwd()/name)
-                window["progress_bar"].update(i + 1)
-
-            window["quote_of_day"].update(current_quote)
-            taking_pictures = False
-            window["progress_bar"].update(visible=False)
-
-            decide_what_to_display = True
-            continue
-
-        # Decide what to display (mean or nice, joke types, etc)
-        if decide_what_to_display:
-            if not first_question_asked:
-                window["welcome_message"].update("Should I be Mean or nice?")
-                window["quote_of_day"].update("1: Mean    2: Nice")
-            if event == "1" and not first_question_asked:
-                window["welcome_message"].update("What jokes to tell?")
-                window["quote_of_day"].update("0: Exit   1: Racist   2: Sexist   3: Dad   4: Dark Humor")
-                first_question_asked = True
-                continue
-
-            if first_question_asked:
-                if event == "0":
-                    window["welcome_message"].update("")
-                    window["quote_of_day"].update(current_quote)
-                    try:
-                        with Path("records.py").open("w", encoding="utf-8") as f:
-                            f.write(f"records = {records}")
-                    except OSError:
-                        logger.exception("Failed to write to records.py")
-                    return
-
-                mapping = {
-                    "1": "racist_jokes",
-                    "2": "sexist_jokes",
-                    "3": "dad_jokes",
-                    "4": "dark_humor",
-                    "5": "my_quotes",
-                }
-
-                if str(event) in mapping:
-                    records[name].append(mapping[str(event)])
-                    window["welcome_message"].update(f"Added {mapping[str(event)].replace('_', ' ')}, Any more?")
-                    event = None
-                    continue
-
-            # If user chose '2' (nice path) - add dad_jokes then exit
-            if event == "2":
-                records[name].append("dad_jokes")
+        if first_question_asked:
+            if event == "0":
                 window["welcome_message"].update("")
                 window["quote_of_day"].update(current_quote)
                 try:
@@ -172,47 +65,147 @@ def add_new_person(current_quote: str, window: Sg.Window) -> None:
                     logger.exception("Failed to write to records.py")
                 return
 
+            mapping = {
+                "1": "racist_jokes",
+                "2": "sexist_jokes",
+                "3": "dad_jokes",
+                "4": "dark_humor",
+                "5": "my_quotes",
+            }
 
-###################################
-# ---------- Main loop ---------- #
-###################################
-def main() -> None:
+            if str(event) in mapping:
+                records[name].append(mapping[str(event)])
+                window["welcome_message"].update(f"Added {mapping[str(event)].replace('_', ' ')}, Any more?")
+                event = None
+                continue
+
+        # If user chose '2' (nice path) - add dad_jokes then exit
+        if event == "2":
+            records[name].append("dad_jokes")
+            window["welcome_message"].update("")
+            window["quote_of_day"].update(current_quote)
+            try:
+                with Path("records.py").open("w", encoding="utf-8") as f:
+                    f.write(f"records = {records}")
+            except OSError:
+                logger.exception("Failed to write to records.py")
+            return
+
+def display_joke(window: Sg.Window, name_recognized: str) -> None:
+    """Display a joke or quote based on the recognized person's preferences."""
+    random_number = random.randint(1, len(records.get(name_recognized)))
+    chosen_list_of_quotes = records[name_recognized][random_number]
+
+    window["welcome_message"].update(f"Welcome, {name_recognized}!")
+    i = pick_index(chosen_list_of_quotes)
+    window["quote_of_day"].update(chosen_list_of_quotes[i])
+
+def add_new_person(current_quote, window):
+    """Register a new person via GUI input."""
+    name = ""
+    collecting_name = False
+    take_pictures = False
+
+    while True:
+        event, _ = window.read(timeout=100)
+        if event == Sg.WIN_CLOSED or "Escape" in str(event):
+            window["welcome_message"].update("")
+            window["quote_of_day"].update(current_quote)
+            return
+
+        if not collecting_name:
+            window["welcome_message"].update("Enter Name:")
+            window["quote_of_day"].update("")
+            name = ""
+            collecting_name = True
+            continue
+
+        if collecting_name:
+            event_clean = event.replace(":", "")
+            event_clean = re.sub(r"\d", "", event_clean)
+            if len(event_clean) == 1 and event_clean.isalpha():
+                name += event_clean
+                window["welcome_message"].update(f"Enter Name: {name}")
+            if "BackSpace" in event or "Delete" in event:
+                name = name[:-1]
+                window["welcome_message"].update(f"Enter Name: {name}")
+
+            if "Return" in event:
+                if not name:
+                    window["quote_of_day"].update("Name cannot be blank")
+
+                elif name in records:
+                    window["quote_of_day"].update(f"{name} is already taken, please use another")
+
+                elif not take_pictures:
+                    window["welcome_message"].update("Press Enter to Start Taking Pictures")
+                    window["quote_of_day"].update("Please stand ~3 feet away and move slowly to capture angles")
+                    take_pictures = True
+                else:
+                    try:
+                        window["welcome_message"].update("Taking Pictures...")
+                        window["quote_of_day"].update("")
+                        window.refresh()
+                        register_person(window, name)  # Capture images using rpicam-still
+                        train_model()  # Rebuild LBPH model
+                        window["welcome_message"].update("Successfully Registered!")
+                        window.refresh()
+                        time.sleep(2)
+                        choose_what_to_display(window, name)
+                    except Exception as e:
+                        print(f"Error registering {name}: {e}")
+                        window["quote_of_day"].update(f"Error registering {name}")
+                        return
+
+                    window["welcome_message"].update("")
+                    window["progress_bar"].update(visible=False)
+                    window["quote_of_day"].update(current_quote)
+                    return
+
+def main():
     """Run the Smart Mirror application."""
+    os.environ["DISPLAY"] = ":0.0"
+
     window = Sg.Window(
-        "Scoreboard",
+        "Smart Mirror",
         create_weather_layout(),
         no_titlebar=False,
         resizable=True,
         return_keyboard_events=True,
     ).Finalize()
 
-    window.set_cursor("none")  # Hide the mouse cursor
+    window.set_cursor("none")
     window.Maximize()
 
-    last_date: date | None = None
+    last_date = None
     last_update = 0.0
     current_quote = ""
 
-    # initial update (wrapped to not crash if fetch fails)
+    # Initial weather update
     try:
         update_weather(window)
     except Exception:
-        logger.exception("Initial weather update failed")
+        pass
+
+    # Start recognition thread
+    recog_stop = threading.Event()
+    recog_thread = threading.Thread(target=recognize_faces, args=(window, recog_stop), daemon=True)
+    recog_thread.start()
 
     while True:
-        event, _ = window.read(timeout=100)
+        event, values = window.read(timeout=100)
         if event == Sg.WIN_CLOSED or "Escape" in str(event):
             break
 
-        # Update weather at regular intervals
+        # Update weather periodically
         if time.time() - last_update >= float(settings.UPDATE_INTERVAL):
             try:
                 update_weather(window)
-            except OSError:
-                logger.exception("Weather update failed")
+            except Exception:
+                pass
             last_update = time.time()
 
-        # If it's a new day, pick a new random quote
+        # Update daily quote
         today = datetime.now(pytz.timezone(settings.TIMEZONE)).date()
         if last_date != today:
             i = pick_index()
@@ -220,10 +213,25 @@ def main() -> None:
             current_quote = quotes[i]
             last_date = today
 
-        # TODO(mattFerretti): integrate facial recognition to update the welcome message
-        if "Return" in str(event) or event == "Return":
+        # Handle recognized faces
+        if event == "recognized_face":
+            print("Face event detected!")
+            name_recognized = values.get("recognized_face")
+            if name_recognized:
+                display_joke(window, name_recognized)
+
+        # Handle no recognition
+        if event == "no_recognition":
+            print("No face recognized.")
+            window["quote_of_day"].update(current_quote)
+            window["welcome_message"].update("")
+
+        # Add new person
+        if "Return" in str(event) or event == "Enter":
             add_new_person(current_quote, window)
 
+    recog_stop.set()
+    recog_thread.join(timeout=1.0)
     window.close()
 
 

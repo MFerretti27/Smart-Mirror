@@ -3,6 +3,7 @@ import FreeSimpleGUI as Sg  # type: ignore[import]
 
 import settings
 from weather import get_weather_data
+from settings import NUM_SAMPLES
 
 
 def create_weather_layout() -> list:
@@ -51,7 +52,7 @@ def create_weather_layout() -> list:
                            Sg.Text("", font=(settings.FONT, settings.GREETING_TXT_SIZE),
                                    key="welcome_message"),
                            Sg.Push()],
-                           [Sg.ProgressBar(100, key="progress_bar", size=(settings.WINDOW_WIDTH, 20),
+                           [Sg.ProgressBar(NUM_SAMPLES, key="progress_bar", size=(settings.WINDOW_WIDTH, 20),
                         bar_color=("green", "white"), visible=False)],
                           [Sg.VPush()],
                           [Sg.Push()],
@@ -108,7 +109,7 @@ def update_weather(window: Sg.Window) -> None:
         window["uv_index"].update("")
 
     window["cloud_cover"].update(f"Cloud Cover: {current_weather.get('cloud_cover','')}\t")
-    window["wind"].update(f"Wind: {current_weather.get('wind_speed_10m','')}"
+    window["wind"].update(f"Wind: {current_weather.get('wind_speed_10m','')}  "
                           f"{current_weather.get('wind_direction_10m','')}")
 
     window["humidity"].update(f"Humidity: {current_weather.get('relative_humidity_2m','')}\t")
