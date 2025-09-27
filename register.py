@@ -56,10 +56,12 @@ def register_person(window: Sg.Window, name: str) -> None:
         faces = face_cascade.detectMultiScale(img, 1.3, 5)
         if len(faces) == 0:
             print(f"No face detected in {filename}, retrying...")
+            window["quote_of_day"].update("No face detected, retrying...")
             continue
         else:
             print(f"Face detected in {filename}")
             window["progress_bar"].update(i + 1)
+            window["quote_of_day"].update("")
             i += 1
 
     print(f"Finished capturing for {name}")

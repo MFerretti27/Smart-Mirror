@@ -55,7 +55,7 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
             event_clean = event
 
         if not first_question_asked:
-            window["welcome_message"].update("Should I be Mean or nice?")
+            window["welcome_message"].update("Should I be Mean or Nice?")
             window["quote_of_day"].update("1: Mean    2: Nice")
         if event_clean == "1" and not first_question_asked:
             window["welcome_message"].update("What jokes to tell?")
@@ -112,12 +112,9 @@ def display_joke(window: Sg.Window, name_recognized: str) -> None:
     }
     chosen_list_of_quotes = lists_map.get(chosen_list_of_quotes, [])
 
-    print(f"Recognized {name_recognized}, displaying {chosen_list_of_quotes}")
-
     window["welcome_message"].update(f"Welcome, {name_recognized}!")
     i = pick_index(chosen_list_of_quotes)
     window["quote_of_day"].update(chosen_list_of_quotes[i])
-    print(f"Displayed quote: {chosen_list_of_quotes[i]}")
 
 def add_new_person(current_quote, window):
     """Register a new person via GUI input."""
@@ -153,6 +150,9 @@ def add_new_person(current_quote, window):
                 if not name:
                     window["quote_of_day"].update("Name cannot be blank")
 
+                elif (Path("dataset") / name).exists() and (Path("dataset") / name).is_dir():
+                    window["quote_of_day"].update(f"{name} is already taken, please use another")
+
                 elif name in records:
                     window["quote_of_day"].update(f"{name} is already taken, please use another")
 
@@ -180,6 +180,35 @@ def add_new_person(current_quote, window):
                     window["welcome_message"].update("")
                     window["quote_of_day"].update(current_quote)
                     return
+
+def change_person_preferences(window: Sg.Window, name: str) -> None:
+    """Change preferences for an existing person."""
+    window["welcome_message"].update("Change Person's Preferences")
+
+    while True:
+        event, values = window.read(timeout=100)
+        if event == Sg.WIN_CLOSED or "Escape" in str(event):
+            break
+
+        event_clean = event.replace(":", "")
+        event_clean = re.sub(r"\d", "", event_clean)
+
+        if len(event_clean) == 1 and event_clean.isalpha():
+            name += event_clean
+            window["welcome_message"].update(f"Enter Name: {name}")
+        if "BackSpace" in event or "Delete" in event:
+            name = name[:-1]
+            window["welcome_message"].update(f"Enter Name: {name}")
+
+        if "Return" in event or "Enter" in event:
+            window["welcome_message"].update(f"Enter Name: {name}")
+
+            if name not in records:
+                window["quote_of_day"].update("Person not found. Press Shift to list all people registered.")
+
+            else:
+                records[name] = []
+                choose_what_to_display(window, name)
 
 def main():
     """Run the Smart Mirror application."""
