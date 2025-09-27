@@ -55,7 +55,7 @@ def register_person(window: Sg.Window, name: str) -> None:
 
         # Verify face detection
         img = cv2.imread(str(filename), cv2.IMREAD_GRAYSCALE)
-        faces = face_cascade.detectMultiScale(img, 1.3, 5)
+        faces = face_cascade.detectMultiScale(img, 1.3, 5)    # type: ignore[attr-defined, arg-type]
         if len(faces) == 0:
             logger.info("No face detected in %s, retrying...", filename)
             window["quote_of_day"].update("No face detected, retrying...")
