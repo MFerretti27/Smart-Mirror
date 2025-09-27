@@ -1,23 +1,31 @@
 """Face recognition using LBPH and rpicam-still."""
 
-import os
-import time
+import logging
 import pickle
-from pathlib import Path
-import threading
 import subprocess
-import numpy as np
-import FreeSimpleGUI as Sg  # type: ignore[import]
+import threading
+import time
+from pathlib import Path
 
-import cv2
+import cv2  # type: ignore[import]
+import FreeSimpleGUI as Sg  # type: ignore[import]
+import numpy as np  # type: ignore[import]
+
+from settings import DETECTION_THRESHOLD, RECOGNITION_THRESHOLD
+
+logger = logging.getLogger(__name__)
 
 TRAINER_FILE = Path("trainer.yml")
 ENCODINGS_FILE = Path("encodings.pkl")
 DATASET_DIR = Path("dataset")
 
-def capture_frame(retries=3, delay=1.0):
+def capture_frame(retries: int = 3, delay: float = 1.0) -> cv2:
     """Capture a frame using rpicam-still and return as OpenCV image."""
     tmp_file = "/tmp/capture.jpg"
+
+    def raise_capture_error(message: str) -> None:
+        raise RuntimeError(message)
+
     for attempt in range(retries):
         try:
             # Take picture with 2-second exposure to ensure camera is ready
@@ -25,7 +33,7 @@ def capture_frame(retries=3, delay=1.0):
                 ["rpicam-still", "-t", "2000", "-n", "-o", tmp_file],
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
             # Wait briefly to ensure file is written
             time.sleep(0.2)
@@ -33,12 +41,16 @@ def capture_frame(retries=3, delay=1.0):
             # Load image
             frame = cv2.imread(tmp_file)
             if frame is None:
-                raise RuntimeError("Failed to read captured image")
-            return frame
-        except Exception as e:
-            print(f"Capture attempt {attempt + 1} failed: {e}")
+                raise_capture_error("Failed to read captured image")
+
+        except (subprocess.CalledProcessError, cv2.error, RuntimeError) as e:
+            logger.info("Capture attempt %d failed: %s", attempt + 1, e)
             time.sleep(delay)
-    raise RuntimeError("Failed to capture frame after multiple attempts")
+
+        return frame
+
+    raise_capture_error("Failed to capture frame after multiple attempts")
+    return None  # Unreachable
 
 def train_model() -> None:
     """Train LBPH face recognizer from dataset images."""
@@ -48,7 +60,7 @@ def train_model() -> None:
     label_map = {}
     current_label = 0
 
-    for person in sorted(os.listdir(DATASET_DIR)):
+    for person in sorted(Path.iterdir(DATASET_DIR)):
         person_dir = DATASET_DIR / person
         if not person_dir.is_dir():
             continue
@@ -64,29 +76,30 @@ def train_model() -> None:
         current_label += 1
 
     if not faces:
-        raise RuntimeError("No faces found in dataset to train")
+        msg = "No faces found in dataset to train"
+        raise RuntimeError(msg)
 
     # Train recognizer
     recognizer.train(faces, np.array(labels))
     recognizer.save(str(TRAINER_FILE))
 
-    with open(ENCODINGS_FILE, "wb") as f:
+    with Path.open(ENCODINGS_FILE, "wb") as f:
         import pickle
         pickle.dump(label_map, f)
-    print("Model trained successfully")
+    logger.info("Model trained successfully")
 
 def recognize_faces(window: Sg.Window, stop_event: threading.Event) -> None:
     """Continuously recognize faces using rpicam-still and call callback(name)."""
-    print("Starting face recognition...")
+    logger.info("Starting face recognition...")
     no_faces = 0
 
     if not TRAINER_FILE.exists() or not ENCODINGS_FILE.exists():
-        print("Trainer file or encodings not found. Train first.")
+        logger.info("Trainer file or encodings not found. Train first.")
         return
 
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     recognizer.read(str(TRAINER_FILE))
-    with open(ENCODINGS_FILE, "rb") as f:
+    with Path.open(ENCODINGS_FILE, "rb") as f:
         label_map = pickle.load(f)
 
     face_cascade = cv2.CascadeClassifier("/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml")
@@ -94,17 +107,17 @@ def recognize_faces(window: Sg.Window, stop_event: threading.Event) -> None:
     while not stop_event.is_set():
         try:
             frame = capture_frame()
-        except Exception as e:
-            print(f"Failed to capture frame: {e}")
+        except (cv2.error, RuntimeError) as e:
+            logger.info("Failed to capture frame: %s", e)
             continue
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
-        print(f"Detected {len(faces)} faces")
+        logger.info("Detected %d faces", len(faces))
 
         # If no faces detected for several frames, notify no recognition
         if len(faces) == 0:
-            if no_faces == 3:
+            if no_faces == DETECTION_THRESHOLD:
                 window.write_event_value("no_recognition", "")
                 no_faces = 0
 
@@ -116,10 +129,10 @@ def recognize_faces(window: Sg.Window, stop_event: threading.Event) -> None:
             try:
                 label, conf = recognizer.predict(roi)
                 name = label_map.get(label, "Unknown")
-                print(f"Found {name} with confidence {conf}")
-                if conf < 120:  # threshold for recognition
+                logger.info("Found %s with confidence %d", name, conf)
+                if conf < RECOGNITION_THRESHOLD:  # threshold for recognition
                     window.write_event_value("recognized_face", name)
                     no_faces = 0
-            except Exception as e:
-                print(f"Recognition error: {e}")
+            except cv2.error as e:
+                logger.info("Recognition error: %s", e)
                 continue

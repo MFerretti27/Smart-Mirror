@@ -1,24 +1,25 @@
 """Smart Mirror Application with Face Recognition using rpicam-still."""
 
+import contextlib
+import logging
 import os
 import random
-import time
 import re
 import threading
+import time
 from collections import deque
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 
 import FreeSimpleGUI as Sg  # type: ignore[import]
 import pytz  # type: ignore[import]
 
 import settings
-import logging
+from facial_recognition.recognize import recognize_faces, train_model
+from facial_recognition.register import register_person
 from layout import create_weather_layout, update_weather
-from quotes import quotes, racist_jokes, sexist_jokes, dad_jokes, dark_humor, my_quotes
+from quotes import dad_jokes, dark_humor, my_quotes, quotes, racist_jokes, sexist_jokes
 from records import records
-from register import register_person
-from recognize import recognize_faces, train_model
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 history: deque[int] = deque(maxlen=10)
 
 
-def pick_index(array_to_pick_from=None):
+def pick_index(array_to_pick_from: list[str] = quotes) -> int:
     """Pick an index from array avoiding recent picks."""
     if array_to_pick_from is None:
         array_to_pick_from = quotes
@@ -48,11 +49,8 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
 
     while True:
         event, _ = window.read(timeout=100)
-        
-        if ":" in str(event):
-            event_clean = str(event.split(":")[0]).replace(" ", "")
-        else:
-            event_clean = event
+
+        event_clean = str(event.split(":")[0]).replace(" ", "") if ":" in str(event) else event
 
         if not first_question_asked:
             window["welcome_message"].update("Should I be Mean or Nice?")
@@ -65,13 +63,7 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
 
         if first_question_asked:
             if event_clean == "0":
-                window["welcome_message"].update("")
-                try:
-                    with Path("records.py").open("w", encoding="utf-8") as f:
-                        f.write(f"records = {records}")
-                except OSError:
-                    logger.exception("Failed to write to records.py")
-                return
+                break
 
             mapping = {
                 "1": "racist_jokes",
@@ -90,13 +82,15 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
         # If user chose '2' (nice path) - add dad_jokes then exit
         if event_clean == "2"  and not first_question_asked:
             records[name].append("dad_jokes")
-            window["welcome_message"].update("")
-            try:
-                with Path("records.py").open("w", encoding="utf-8") as f:
-                    f.write(f"records = {records}")
-            except OSError:
-                logger.exception("Failed to write to records.py")
-            return
+            break
+
+    window["welcome_message"].update("")
+    try:
+        with Path("records.py").open("w", encoding="utf-8") as f:
+            f.write(f"records = {records}")
+    except OSError:
+        logger.exception("Failed to write to records.py")
+
 
 def display_joke(window: Sg.Window, name_recognized: str) -> None:
     """Display a joke or quote based on the recognized person's preferences."""
@@ -116,7 +110,7 @@ def display_joke(window: Sg.Window, name_recognized: str) -> None:
     i = pick_index(chosen_list_of_quotes)
     window["quote_of_day"].update(chosen_list_of_quotes[i])
 
-def add_new_person(current_quote, window):
+def add_new_person(current_quote: str, window: Sg.Window) -> None:
     """Register a new person via GUI input."""
     name = ""
     collecting_name = False
@@ -150,10 +144,7 @@ def add_new_person(current_quote, window):
                 if not name:
                     window["quote_of_day"].update("Name cannot be blank")
 
-                elif (Path("dataset") / name).exists() and (Path("dataset") / name).is_dir():
-                    window["quote_of_day"].update(f"{name} is already taken, please use another")
-
-                elif name in records:
+                elif ((Path("dataset") / name).exists() and (Path("dataset") / name).is_dir()) or name in records:
                     window["quote_of_day"].update(f"{name} is already taken, please use another")
 
                 elif not take_pictures:
@@ -172,8 +163,8 @@ def add_new_person(current_quote, window):
                         window.refresh()
                         time.sleep(2)
                         choose_what_to_display(window, name)
-                    except Exception as e:
-                        print(f"Error registering {name}: {e}")
+                    except Exception:
+                        logger.exception("Error registering new person")
                         window["quote_of_day"].update(f"Error registering {name}")
                         return
 
@@ -186,7 +177,7 @@ def change_person_preferences(window: Sg.Window, name: str) -> None:
     window["welcome_message"].update("Change Person's Preferences")
 
     while True:
-        event, values = window.read(timeout=100)
+        event, _ = window.read(timeout=100)
         if event == Sg.WIN_CLOSED or "Escape" in str(event):
             break
 
@@ -210,7 +201,7 @@ def change_person_preferences(window: Sg.Window, name: str) -> None:
                 records[name] = []
                 choose_what_to_display(window, name)
 
-def main():
+def main() -> None:
     """Run the Smart Mirror application."""
     os.environ["DISPLAY"] = ":0.0"
 
@@ -231,10 +222,8 @@ def main():
     name_already_detected = False
 
     # Initial weather update
-    try:
+    with contextlib.suppress(Exception):
         update_weather(window)
-    except Exception:
-        pass
 
     # Start recognition thread
     recog_stop = threading.Event()
@@ -248,10 +237,8 @@ def main():
 
         # Update weather periodically
         if time.time() - last_update >= float(settings.UPDATE_INTERVAL):
-            try:
+            with contextlib.suppress(Exception):
                 update_weather(window)
-            except Exception:
-                pass
             last_update = time.time()
 
         # Update daily quote
@@ -264,7 +251,7 @@ def main():
 
         # Handle recognized faces
         if event == "recognized_face":
-            print("Face event detected!")
+            logger.info("Face event detected!")
             name_recognized = values.get("recognized_face")
             if name_recognized and not name_already_detected:
                 name_already_detected = True
@@ -273,7 +260,7 @@ def main():
         # Handle no recognition
         if event == "no_recognition":
             name_already_detected = False
-            print("No face recognized.")
+            logger.info("No face recognized.")
             window["quote_of_day"].update(current_quote)
             window["welcome_message"].update("")
 

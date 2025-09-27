@@ -2,8 +2,8 @@
 import FreeSimpleGUI as Sg  # type: ignore[import]
 
 import settings
-from weather import get_weather_data
 from settings import NUM_SAMPLES
+from weather import get_weather_data
 
 
 def create_weather_layout() -> list:

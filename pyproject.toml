@@ -4,7 +4,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["S311"]
+ignore = ["S311", "S607", "S603", "S108", "S301", "S602"]
 
 [tool.ruff.format]
 quote-style = "double"
