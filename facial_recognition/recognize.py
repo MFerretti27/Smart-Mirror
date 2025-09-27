@@ -84,7 +84,6 @@ def train_model() -> None:
     recognizer.save(str(TRAINER_FILE))
 
     with Path.open(ENCODINGS_FILE, "wb") as f:
-        import pickle
         pickle.dump(label_map, f)
     logger.info("Model trained successfully")
 

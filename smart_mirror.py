@@ -110,11 +110,33 @@ def display_joke(window: Sg.Window, name_recognized: str) -> None:
     i = pick_index(chosen_list_of_quotes)
     window["quote_of_day"].update(chosen_list_of_quotes[i])
 
+def collect_name(window: Sg.Window) -> str:
+    """Collect name input from GUI."""
+    name = ""
+
+    while True:
+        event, _ = window.read(timeout=100)
+        event_clean = event.replace(":", "")
+        event_clean = re.sub(r"\d", "", event_clean)
+
+        if len(event_clean) == 1 and event_clean.isalpha():
+            name += event_clean
+            window["welcome_message"].update(f"Enter Name: {name}")
+        if "BackSpace" in event or "Delete" in event:
+            name = name[:-1]
+            window["welcome_message"].update(f"Enter Name: {name}")
+
+        if "Return" in event:
+            if not name:
+                window["quote_of_day"].update("Name cannot be blank")
+            elif ((Path("dataset") / name).exists() and (Path("dataset") / name).is_dir()) or name in records:
+                window["quote_of_day"].update(f"{name} is already taken, please use another")
+            else:
+                return name
+
 def add_new_person(current_quote: str, window: Sg.Window) -> None:
     """Register a new person via GUI input."""
-    name = ""
     collecting_name = False
-    take_pictures = False
 
     while True:
         event, _ = window.read(timeout=100)
@@ -126,51 +148,32 @@ def add_new_person(current_quote: str, window: Sg.Window) -> None:
         if not collecting_name:
             window["welcome_message"].update("Enter Name:")
             window["quote_of_day"].update("")
-            name = ""
             collecting_name = True
+            name = collect_name()
+            window["welcome_message"].update("Press Enter to Start Taking Pictures")
+            window["quote_of_day"].update("Please stand ~3 feet away and move slowly to capture angles")
             continue
 
-        if collecting_name:
-            event_clean = event.replace(":", "")
-            event_clean = re.sub(r"\d", "", event_clean)
-            if len(event_clean) == 1 and event_clean.isalpha():
-                name += event_clean
-                window["welcome_message"].update(f"Enter Name: {name}")
-            if "BackSpace" in event or "Delete" in event:
-                name = name[:-1]
-                window["welcome_message"].update(f"Enter Name: {name}")
+        if collecting_name and "Return" in event:
+            try:
+                window["welcome_message"].update("Taking Pictures...")
+                window["quote_of_day"].update("")
+                window.refresh()
+                register_person(window, name)  # Capture images using rpicam-still
+                train_model()  # Rebuild LBPH model
+                window["welcome_message"].update("Successfully Registered!")
+                window["progress_bar"].update(visible=False)
+                window.refresh()
+                time.sleep(2)
+                choose_what_to_display(window, name)
+            except Exception:
+                logger.exception("Error registering new person")
+                window["quote_of_day"].update(f"Error registering {name}")
+                return
 
-            if "Return" in event:
-                if not name:
-                    window["quote_of_day"].update("Name cannot be blank")
-
-                elif ((Path("dataset") / name).exists() and (Path("dataset") / name).is_dir()) or name in records:
-                    window["quote_of_day"].update(f"{name} is already taken, please use another")
-
-                elif not take_pictures:
-                    window["welcome_message"].update("Press Enter to Start Taking Pictures")
-                    window["quote_of_day"].update("Please stand ~3 feet away and move slowly to capture angles")
-                    take_pictures = True
-                else:
-                    try:
-                        window["welcome_message"].update("Taking Pictures...")
-                        window["quote_of_day"].update("")
-                        window.refresh()
-                        register_person(window, name)  # Capture images using rpicam-still
-                        train_model()  # Rebuild LBPH model
-                        window["welcome_message"].update("Successfully Registered!")
-                        window["progress_bar"].update(visible=False)
-                        window.refresh()
-                        time.sleep(2)
-                        choose_what_to_display(window, name)
-                    except Exception:
-                        logger.exception("Error registering new person")
-                        window["quote_of_day"].update(f"Error registering {name}")
-                        return
-
-                    window["welcome_message"].update("")
-                    window["quote_of_day"].update(current_quote)
-                    return
+            window["welcome_message"].update("")
+            window["quote_of_day"].update(current_quote)
+            return
 
 def change_person_preferences(window: Sg.Window, name: str) -> None:
     """Change preferences for an existing person."""

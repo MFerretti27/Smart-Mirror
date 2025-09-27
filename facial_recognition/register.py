@@ -41,7 +41,7 @@ def register_person(window: Sg.Window, name: str) -> None:
     i = 0
 
     while i < NUM_SAMPLES:
-        event, _ = window.read(timeout=100)
+        window.read(timeout=100)
         filename = person_dir / f"{name}_{i}.jpg"
         cmd = f"rpicam-still -o {filename} -t 500 -n"
         subprocess.run(
