@@ -55,7 +55,7 @@ def capture_frame(retries: int = 3, delay: float = 1.0) -> Any:
 
 def train_model() -> None:
     """Train LBPH face recognizer from dataset images."""
-    recognizer = cv2.face.LBPHFaceRecognizer_create()  # type: ignore[attr-defined], ignore[arg-type]
+    recognizer = cv2.face.LBPHFaceRecognizer_create()  # type: ignore[attr-defined, arg-type]
     faces = []
     labels = []
     label_map = {}
