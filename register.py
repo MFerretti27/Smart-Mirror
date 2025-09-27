@@ -36,12 +36,19 @@ def register_person(window: Sg.Window, name: str) -> None:
 
     face_cascade = get_haar_cascade()
     print(f"Capturing {NUM_SAMPLES} images for {name}...")
+    i = 0
 
-    for i in range(NUM_SAMPLES):
+    while i < NUM_SAMPLES:
         event, _ = window.read(timeout=100)
         filename = person_dir / f"{name}_{i}.jpg"
         cmd = f"rpicam-still -o {filename} -t 500 -n"
-        subprocess.run(cmd, shell=True, check=True)
+        subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            shell=True,
+        )
         print(f"Captured {filename}")
 
         # Verify face detection
@@ -49,9 +56,10 @@ def register_person(window: Sg.Window, name: str) -> None:
         faces = face_cascade.detectMultiScale(img, 1.3, 5)
         if len(faces) == 0:
             print(f"No face detected in {filename}, retrying...")
-            i -= 1
             continue
-
-        window["progress_bar"].update(i + 1)
+        else:
+            print(f"Face detected in {filename}")
+            window["progress_bar"].update(i + 1)
+            i += 1
 
     print(f"Finished capturing for {name}")

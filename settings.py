@@ -14,4 +14,4 @@ BACKGROUND_COLOR = "black"
 TEXT_COLOR = "white"
 UPDATE_INTERVAL = 600  # 10 minutes in seconds
 TIMEZONE = "US/Eastern"
-NUM_SAMPLES = 10  # number of images per person
+NUM_SAMPLES = 20  # number of images per person

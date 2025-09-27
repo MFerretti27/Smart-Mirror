@@ -9,7 +9,6 @@ my_quotes = [
 
 sexist_jokes = [
     "How many sexists does it take to change a light bulb? None, let the b*tch cook in the dark.",
-    "How do you turn a fox into an elephant? Marry it!",
     "Why do men find it difficult to make eye contact? Breasts don't have eyes.",
     "What do you say to a woman with 2 black eyes? Nothing, she's been told twice already.",
 ]

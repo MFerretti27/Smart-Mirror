@@ -7,6 +7,7 @@ import re
 import threading
 from collections import deque
 from datetime import datetime, date
+from pathlib import Path
 
 import FreeSimpleGUI as Sg  # type: ignore[import]
 import pytz  # type: ignore[import]
@@ -42,22 +43,29 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
     """Ask user what type of content to display via GUI."""
     first_question_asked = False
 
+    if name not in records:
+        records[name] = []
+
     while True:
         event, _ = window.read(timeout=100)
+        
+        if ":" in str(event):
+            event_clean = str(event.split(":")[0]).replace(" ", "")
+        else:
+            event_clean = event
 
         if not first_question_asked:
             window["welcome_message"].update("Should I be Mean or nice?")
             window["quote_of_day"].update("1: Mean    2: Nice")
-        if event == "1" and not first_question_asked:
+        if event_clean == "1" and not first_question_asked:
             window["welcome_message"].update("What jokes to tell?")
             window["quote_of_day"].update("0: Exit   1: Racist   2: Sexist   3: Dad   4: Dark Humor")
             first_question_asked = True
             continue
 
         if first_question_asked:
-            if event == "0":
+            if event_clean == "0":
                 window["welcome_message"].update("")
-                window["quote_of_day"].update(current_quote)
                 try:
                     with Path("records.py").open("w", encoding="utf-8") as f:
                         f.write(f"records = {records}")
@@ -73,17 +81,16 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
                 "5": "my_quotes",
             }
 
-            if str(event) in mapping:
-                records[name].append(mapping[str(event)])
-                window["welcome_message"].update(f"Added {mapping[str(event)].replace('_', ' ')}, Any more?")
+            if str(event_clean) in mapping:
+                records[name].append(mapping[str(event_clean)])
+                window["welcome_message"].update(f"Added {mapping[str(event_clean)].replace('_', ' ')}, Any more?")
                 event = None
                 continue
 
         # If user chose '2' (nice path) - add dad_jokes then exit
-        if event == "2":
+        if event_clean == "2"  and not first_question_asked:
             records[name].append("dad_jokes")
             window["welcome_message"].update("")
-            window["quote_of_day"].update(current_quote)
             try:
                 with Path("records.py").open("w", encoding="utf-8") as f:
                     f.write(f"records = {records}")
@@ -96,9 +103,21 @@ def display_joke(window: Sg.Window, name_recognized: str) -> None:
     random_number = random.randint(1, len(records.get(name_recognized)))
     chosen_list_of_quotes = records[name_recognized][random_number]
 
+    lists_map = {
+        "racist_jokes": racist_jokes,
+        "sexist_jokes": sexist_jokes,
+        "dad_jokes": dad_jokes,
+        "dark_humor": dark_humor,
+        "my_quotes": my_quotes,
+    }
+    chosen_list_of_quotes = lists_map.get(chosen_list_of_quotes, [])
+
+    print(f"Recognized {name_recognized}, displaying {chosen_list_of_quotes}")
+
     window["welcome_message"].update(f"Welcome, {name_recognized}!")
     i = pick_index(chosen_list_of_quotes)
     window["quote_of_day"].update(chosen_list_of_quotes[i])
+    print(f"Displayed quote: {chosen_list_of_quotes[i]}")
 
 def add_new_person(current_quote, window):
     """Register a new person via GUI input."""
@@ -149,6 +168,7 @@ def add_new_person(current_quote, window):
                         register_person(window, name)  # Capture images using rpicam-still
                         train_model()  # Rebuild LBPH model
                         window["welcome_message"].update("Successfully Registered!")
+                        window["progress_bar"].update(visible=False)
                         window.refresh()
                         time.sleep(2)
                         choose_what_to_display(window, name)
@@ -158,7 +178,6 @@ def add_new_person(current_quote, window):
                         return
 
                     window["welcome_message"].update("")
-                    window["progress_bar"].update(visible=False)
                     window["quote_of_day"].update(current_quote)
                     return
 
@@ -180,6 +199,7 @@ def main():
     last_date = None
     last_update = 0.0
     current_quote = ""
+    name_already_detected = False
 
     # Initial weather update
     try:
@@ -217,11 +237,13 @@ def main():
         if event == "recognized_face":
             print("Face event detected!")
             name_recognized = values.get("recognized_face")
-            if name_recognized:
+            if name_recognized and not name_already_detected:
+                name_already_detected = True
                 display_joke(window, name_recognized)
 
         # Handle no recognition
         if event == "no_recognition":
+            name_already_detected = False
             print("No face recognized.")
             window["quote_of_day"].update(current_quote)
             window["welcome_message"].update("")
@@ -229,6 +251,7 @@ def main():
         # Add new person
         if "Return" in str(event) or event == "Enter":
             add_new_person(current_quote, window)
+            recog_thread.start()
 
     recog_stop.set()
     recog_thread.join(timeout=1.0)

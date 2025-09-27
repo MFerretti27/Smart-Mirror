@@ -104,7 +104,7 @@ def recognize_faces(window: Sg.Window, stop_event: threading.Event) -> None:
 
         # If no faces detected for several frames, notify no recognition
         if len(faces) == 0:
-            if no_faces == 5:
+            if no_faces == 3:
                 window.write_event_value("no_recognition", "")
                 no_faces = 0
 

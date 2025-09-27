@@ -1,1 +1,1 @@
-records = {}
+records = {'Matthew': ['racist_jokes', 'sexist_jokes', 'dad_jokes', 'dark_humor', 'my_quotes']}
