@@ -6,6 +6,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 import cv2  # type: ignore[import]
 import FreeSimpleGUI as Sg  # type: ignore[import]
@@ -19,7 +20,7 @@ TRAINER_FILE = Path("trainer.yml")
 ENCODINGS_FILE = Path("encodings.pkl")
 DATASET_DIR = Path("dataset")
 
-def capture_frame(retries: int = 3, delay: float = 1.0) -> cv2:
+def capture_frame(retries: int = 3, delay: float = 1.0) -> Any:
     """Capture a frame using rpicam-still and return as OpenCV image."""
     tmp_file = "/tmp/capture.jpg"
 
@@ -54,7 +55,7 @@ def capture_frame(retries: int = 3, delay: float = 1.0) -> cv2:
 
 def train_model() -> None:
     """Train LBPH face recognizer from dataset images."""
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    recognizer = cv2.face.LBPHFaceRecognizer_create()  # type: ignore[attr-defined]
     faces = []
     labels = []
     label_map = {}
@@ -96,7 +97,7 @@ def recognize_faces(window: Sg.Window, stop_event: threading.Event) -> None:
         logger.info("Trainer file or encodings not found. Train first.")
         return
 
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    recognizer = cv2.face.LBPHFaceRecognizer_create()  # type: ignore[attr-defined]
     recognizer.read(str(TRAINER_FILE))
     with Path.open(ENCODINGS_FILE, "rb") as f:
         label_map = pickle.load(f)

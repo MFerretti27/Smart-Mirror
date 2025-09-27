@@ -94,8 +94,8 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
 
 def display_joke(window: Sg.Window, name_recognized: str) -> None:
     """Display a joke or quote based on the recognized person's preferences."""
-    random_number = random.randint(1, len(records.get(name_recognized)))
-    chosen_list_of_quotes = records[name_recognized][random_number]
+    random_number = random.randint(1, len(records[name_recognized]))
+    chosen_type_of_jokes = records[name_recognized][random_number]
 
     lists_map = {
         "racist_jokes": racist_jokes,
@@ -104,11 +104,11 @@ def display_joke(window: Sg.Window, name_recognized: str) -> None:
         "dark_humor": dark_humor,
         "my_quotes": my_quotes,
     }
-    chosen_list_of_quotes = lists_map.get(chosen_list_of_quotes, [])
+    chosen_list_of_jokes = lists_map.get(chosen_type_of_jokes, [])
 
     window["welcome_message"].update(f"Welcome, {name_recognized}!")
-    i = pick_index(chosen_list_of_quotes)
-    window["quote_of_day"].update(chosen_list_of_quotes[i])
+    i = pick_index(chosen_list_of_jokes)
+    window["quote_of_day"].update(chosen_list_of_jokes[i])
 
 def collect_name(window: Sg.Window) -> str:
     """Collect name input from GUI."""
