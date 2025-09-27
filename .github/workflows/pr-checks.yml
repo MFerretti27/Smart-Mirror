@@ -95,7 +95,8 @@ jobs:
             pytz \
             opencv-contrib-python \
             opencv-python \
-            pillow
+            pillow \
+            mypy
 
       - name: Run SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -155,9 +156,9 @@ jobs:
             pytz \
             opencv-contrib-python \
             opencv-python \
-            pillow
+            pillow \
+            mypy
 
       - name: Run mypy
         run: |
-          pip3 install numpy
           mypy .

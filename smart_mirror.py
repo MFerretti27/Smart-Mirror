@@ -149,7 +149,7 @@ def add_new_person(current_quote: str, window: Sg.Window) -> None:
             window["welcome_message"].update("Enter Name:")
             window["quote_of_day"].update("")
             collecting_name = True
-            name = collect_name()
+            name = collect_name(window)
             window["welcome_message"].update("Press Enter to Start Taking Pictures")
             window["quote_of_day"].update("Please stand ~3 feet away and move slowly to capture angles")
             continue
