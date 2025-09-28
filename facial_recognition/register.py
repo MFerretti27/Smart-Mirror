@@ -1,14 +1,15 @@
 """Register new persons and capture face dataset using rpicam-still."""
 
-import cv2
-import numpy as np
+import logging
 import subprocess
 from pathlib import Path
-import pickle
 
+import cv2  # type: ignore[import]
 import FreeSimpleGUI as Sg  # type: ignore[import]
 
 from settings import NUM_SAMPLES
+
+logger = logging.getLogger(__name__)
 
 # Paths
 DATASET_DIR = Path("dataset")
@@ -25,7 +26,8 @@ def get_haar_cascade() -> cv2.CascadeClassifier:
     for path in possible:
         if Path(path).exists():
             return cv2.CascadeClassifier(str(path))
-    raise FileNotFoundError("Could not find haarcascade_frontalface_default.xml on system")
+    msg = "Could not find haarcascade_frontalface_default.xml on system"
+    raise FileNotFoundError(msg)
 
 def register_person(window: Sg.Window, name: str) -> None:
     """Capture face images for a new person and save in dataset."""
@@ -35,11 +37,11 @@ def register_person(window: Sg.Window, name: str) -> None:
     person_dir.mkdir(parents=True, exist_ok=True)
 
     face_cascade = get_haar_cascade()
-    print(f"Capturing {NUM_SAMPLES} images for {name}...")
+    logger.info("Capturing %d images for %s...", NUM_SAMPLES, name)
     i = 0
 
     while i < NUM_SAMPLES:
-        event, _ = window.read(timeout=100)
+        window.read(timeout=100)
         filename = person_dir / f"{name}_{i}.jpg"
         cmd = f"rpicam-still -o {filename} -t 500 -n"
         subprocess.run(
@@ -49,19 +51,18 @@ def register_person(window: Sg.Window, name: str) -> None:
             check=True,
             shell=True,
         )
-        print(f"Captured {filename}")
+        logger.info("Captured %s", filename)
 
         # Verify face detection
         img = cv2.imread(str(filename), cv2.IMREAD_GRAYSCALE)
-        faces = face_cascade.detectMultiScale(img, 1.3, 5)
+        faces = face_cascade.detectMultiScale(img, 1.3, 5)    # type: ignore[attr-defined, arg-type]
         if len(faces) == 0:
-            print(f"No face detected in {filename}, retrying...")
+            logger.info("No face detected in %s, retrying...", filename)
             window["quote_of_day"].update("No face detected, retrying...")
-            continue
         else:
-            print(f"Face detected in {filename}")
+            logger.info("Face detected in %s", filename)
             window["progress_bar"].update(i + 1)
             window["quote_of_day"].update("")
             i += 1
 
-    print(f"Finished capturing for {name}")
+    logger.info("Finished capturing for %s", name)

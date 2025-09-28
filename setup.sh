@@ -56,7 +56,8 @@ pip3 install \
     pytz \
     opencv-contrib-python \
     opencv-python \
-    pillow
+    pillow \
+    mypy
 
 echo "=== Verifying installation ==="
 
