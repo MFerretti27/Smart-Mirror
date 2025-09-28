@@ -22,9 +22,30 @@ from quotes import dad_jokes, dark_humor, my_quotes, quotes, racist_jokes, sexis
 from records import records
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,  # or DEBUG if you want more detail
+    format="%(message)s"
+)
 
 # History for quote picking
-history: deque[int] = deque(maxlen=10)
+history: deque[int] = deque(maxlen=20)
+
+# Types of greeting messages
+GREETING_MESSAGES = [
+    "Hello",
+    "Welcome",
+    "Hi",
+    "Good to see you",
+    "Hey there",
+    "Greetings",
+    "Salutations",
+    "Howdy",
+    "Ahoy",
+    "Yo",
+    "What's up",
+    "Good day",
+    "Namaste",
+]
 
 
 def pick_index(array_to_pick_from: list[str] = quotes) -> int:
@@ -94,8 +115,11 @@ def choose_what_to_display(window: Sg.Window, name: str) -> None:
 
 def display_joke(window: Sg.Window, name_recognized: str) -> None:
     """Display a joke or quote based on the recognized person's preferences."""
-    random_number = random.randint(1, len(records[name_recognized]))
+    random_number = random.randint(1, len(records[name_recognized]) - 1)
     chosen_type_of_jokes = records[name_recognized][random_number]
+
+    random_number = random.randint(1, len(GREETING_MESSAGES) - 1)
+    greeting_message = GREETING_MESSAGES[random_number]
 
     lists_map = {
         "racist_jokes": racist_jokes,
@@ -106,7 +130,7 @@ def display_joke(window: Sg.Window, name_recognized: str) -> None:
     }
     chosen_list_of_jokes = lists_map.get(chosen_type_of_jokes, [])
 
-    window["welcome_message"].update(f"Welcome, {name_recognized}!")
+    window["welcome_message"].update(f"{greeting_message}, {name_recognized}!")
     i = pick_index(chosen_list_of_jokes)
     window["quote_of_day"].update(chosen_list_of_jokes[i])
 
