@@ -24,7 +24,7 @@ from records import records
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,  # or DEBUG if you want more detail
-    format="%(message)s"
+    format="%(message)s",
 )
 
 # History for quote picking
