@@ -1,8 +1,8 @@
 """Layout module for Smart Mirror application."""
 import FreeSimpleGUI as Sg  # type: ignore[import]
 
-import settings
-from settings import NUM_SAMPLES
+from configuration import settings
+from configuration.settings import NUM_SAMPLES
 from weather import get_weather_data
 
 

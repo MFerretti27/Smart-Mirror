@@ -14,12 +14,12 @@ from pathlib import Path
 import FreeSimpleGUI as Sg  # type: ignore[import]
 import pytz  # type: ignore[import]
 
-import settings
+from configuration import settings
+from configuration.quotes import dad_jokes, dark_humor, my_quotes, quotes, racist_jokes, sexist_jokes
+from configuration.records import records
 from facial_recognition.recognize import recognize_faces, train_model
 from facial_recognition.register import register_person
 from layout import create_weather_layout, update_weather
-from quotes import dad_jokes, dark_humor, my_quotes, quotes, racist_jokes, sexist_jokes
-from records import records
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -45,6 +45,7 @@ GREETING_MESSAGES = [
     "What's up",
     "Good day",
     "Namaste",
+    "Salve",
 ]
 
 

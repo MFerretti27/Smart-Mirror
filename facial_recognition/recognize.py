@@ -12,7 +12,7 @@ import cv2  # type: ignore[import]
 import FreeSimpleGUI as Sg  # type: ignore[import]
 import numpy as np  # type: ignore[import]
 
-from settings import DETECTION_THRESHOLD, RECOGNITION_THRESHOLD
+from configuration.settings import DETECTION_THRESHOLD, RECOGNITION_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
