@@ -7,7 +7,7 @@ from pathlib import Path
 import cv2  # type: ignore[import]
 import FreeSimpleGUI as Sg  # type: ignore[import]
 
-from settings import NUM_SAMPLES
+from configuration.settings import NUM_SAMPLES
 
 logger = logging.getLogger(__name__)
 
